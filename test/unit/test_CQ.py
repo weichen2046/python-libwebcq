@@ -54,4 +54,18 @@ class CQTestCase(unittest.TestCase):
             if db in mockdata['db_sets']:
                 found_db = True
 
-        self.assertTrue(found_db, 'Shound contains any predefined database in %s' % mockdata['db_sets'])
+        self.assertTrue(
+            found_db, 'Shound contains any predefined database in %s' % mockdata['db_sets'])
+
+    def test_login(self):
+        cq = CQ(mockdata['base_url'])
+        origin_cquid = cq.cquid
+        cq.open_session()
+        try:
+            res = cq.login(mockdata['loginId'],
+                           mockdata['password'], mockdata['repository'])
+        finally:
+            cq.close_session()
+        self.assertTrue(res, 'Login failed.')
+        self.assertNotEqual(origin_cquid, cq.cquid,
+                            'New cq uid should be returned after login.')

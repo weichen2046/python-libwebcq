@@ -2,17 +2,26 @@
 
 A wrapper library for accessing web ClearQuest(CQ).
 
-## Dependency python packages
+## Setup environment
+
+### virtualenv
+
+```bash
+cd /project/root/dir
+virtualenv -p python3.6 .pyenv
+```
+
+## Install dependency python packages
 
 [requests][pip-requests]
 
-```python
+```bash
 pip install requests
 ```
 
 [nose][pip-nose]
 
-```python
+```bash
 pip install nose
 ```
 

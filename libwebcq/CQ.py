@@ -15,17 +15,29 @@ class CQ(object):
     '''
     A helper class for access web ClearQuest.
     '''
-
     class CQError(Exception):
         '''Basic exception for errors related to use CQ lib.'''
 
     class SessionError(CQError):
         '''Raised when access network resources without an available session.'''
 
+    path_map = {
+        'LOGIN': 'cqlogin.cq',
+    }
+
     def __init__(self, url):
         self.url = url
         self.session = None
         self.cquid = str(uuid.uuid4())
+        self.tz_offset = 'GMT+8:00'
+        self.userdb = None
+        self.full_name = None
+
+    def set_timezone(self, timezone):
+        '''
+        Set timezone offset. The default timezone offset is `GMT+8:00`.
+        '''
+        self.tz_offset = timezone
 
     def open_session(self):
         '''
@@ -96,6 +108,42 @@ class CQ(object):
             for item in jobj['items']:
                 dbs.append(item[jobj['identifier']])
         return dbs
+
+    def login(self, username, password, repository):
+        '''
+        Login the session.
+
+        - Need access network resources.
+        - No need login.
+        '''
+        self._check_session()
+        path = self.path_map['LOGIN']
+        url = urllib.parse.urljoin(self.url, path)
+        params = {
+            'action': 'DoLogin',
+        }
+        data = {
+            'loginId': username,
+            'password': password,
+            'repository': repository,
+            'tzOffset': self.tz_offset,
+            'cquid': self.cquid
+        }
+        resp = self.session.post(url, params=params, data=data)
+        tmp_text = resp.text.strip()
+        tmp_text = re.sub(r"{\s*'?(\w)", r'{"\1', tmp_text)
+        tmp_text = re.sub(r",\s*'?(\w)", r',"\1', tmp_text)
+        tmp_text = re.sub(r"(\w)'?\s*:(?!/)", r'\1":', tmp_text)
+        tmp_text = re.sub(r":\s*'([^']*)'\s*([,}])", r':"\1"\2', tmp_text)
+        tmp_text = re.sub(r",\s*]", "]", tmp_text)
+        jobj = json.loads(tmp_text)
+        if jobj['status'] != 'true':
+            return False
+        self.cquid = jobj['cqUid']
+        self.userdb = jobj['userdb']
+        self.full_name = jobj['fullName']
+        # TODO: update other inner data if needed.
+        return True
 
     def _check_session(self):
         '''
