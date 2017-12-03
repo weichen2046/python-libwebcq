@@ -76,10 +76,10 @@ class CQ(object):
             'action': 'CheckAuthenticated',
             'cquid': cquid if cquid else self.cquid,
         }
-        path = 'cqlogin.cq'
+        path = self.path_map['LOGIN']
         url = urllib.parse.urljoin(self.url, path)
-        r = self.session.get(url, params=params)
-        jobj = self._check_response(r)
+        resp = self.session.get(url, params=params)
+        jobj = self._check_response(resp)
         if jobj:
             status = jobj['STATUS']
             is_auth = jobj['isAuthenticated']
@@ -96,14 +96,14 @@ class CQ(object):
 
         dbs = []
 
-        path = 'cqlogin.cq'
+        path = self.path_map['LOGIN']
         params = {
             'action': 'DoGetDbSets',
             'cquid': self.cquid,
         }
         url = urllib.parse.urljoin(self.url, path)
-        r = self.session.get(url, params=params)
-        jobj = self._check_response(r)
+        resp = self.session.get(url, params=params)
+        jobj = self._check_response(resp)
         if jobj:
             for item in jobj['items']:
                 dbs.append(item[jobj['identifier']])
@@ -130,6 +130,9 @@ class CQ(object):
             'cquid': self.cquid
         }
         resp = self.session.post(url, params=params, data=data)
+        if resp.status_code != requests.codes.ok:
+            return False
+        # Handle non-strict json response
         tmp_text = resp.text.strip()
         tmp_text = re.sub(r"{\s*'?(\w)", r'{"\1', tmp_text)
         tmp_text = re.sub(r",\s*'?(\w)", r',"\1', tmp_text)
@@ -145,6 +148,34 @@ class CQ(object):
         # TODO: update other inner data if needed.
         return True
 
+    def logout(self):
+        '''
+        Logout the session.
+
+        - Need access network resources.
+        - Need login.
+        '''
+        self._check_session()
+        path = self.path_map['LOGIN']
+        url = urllib.parse.urljoin(self.url, path)
+        params = {
+            'action': 'DoLogout',
+        }
+        data = {
+            'cquid': self.cquid,
+        }
+        resp = self.session.post(url, params=params, data=data)
+        if self._check_response_status(resp):
+            self._reset_fields()
+            return True
+        return False
+
+    def _reset_fields(self):
+        self.cquid = str(uuid.uuid4())
+        self.userdb = None
+        self.full_name = None
+        # TODO: reset other inner fields if needed.
+
     def _check_session(self):
         '''
         Will raise `SessionError` when there is no available session attached.
@@ -155,12 +186,26 @@ class CQ(object):
 
     def _check_response(self, resp):
         '''
+        Assume the response text is starts with `for(;;);` and followed well
+        formatted json string.
+
         Return a JSON object or None.
         '''
         jobj = None
         if resp.status_code == requests.codes.ok:
-            res_patt = re.compile('for\(;;\);(.*)')
-            m = re.match(res_patt, resp.text)
-            if m:
-                jobj = json.loads(m[1])
+            res_patt = re.compile(r'for\(;;\);(.*)')
+            mat = re.match(res_patt, resp.text)
+            if mat:
+                jobj = json.loads(mat[1])
         return jobj
+
+    def _check_response_status(self, resp):
+        '''
+        Helper method for checking network response status.abs
+
+        Return True if status is ok, otherwise False.
+        '''
+        if resp.status_code == requests.codes.ok:
+            return True
+        else:
+            return False

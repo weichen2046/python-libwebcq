@@ -64,8 +64,31 @@ class CQTestCase(unittest.TestCase):
         try:
             res = cq.login(mockdata['loginId'],
                            mockdata['password'], mockdata['repository'])
+            status, is_auth = cq.check_authenticated()
         finally:
             cq.close_session()
         self.assertTrue(res, 'Login failed.')
         self.assertNotEqual(origin_cquid, cq.cquid,
                             'New cq uid should be returned after login.')
+        self.assertTrue(is_auth, 'New cq uid should be authenticated after login.')
+
+        # Clear resources.
+        cq.open_session()
+        try:
+            cq.logout()
+        finally:
+            cq.close_session()
+
+    def test_logout(self):
+        cq = CQ(mockdata['base_url'])
+        origin_cquid = cq.cquid
+        cq.open_session()
+        try:
+            res = cq.logout()
+            status, is_auth = cq.check_authenticated()
+        finally:
+            cq.close_session()
+        self.assertTrue(res, 'Logout network failed.')
+        self.assertNotEqual(origin_cquid, cq.cquid,
+                            'New cq uid should be generated after logout.')
+        self.assertFalse(is_auth, 'New cq uid should not be authenticated after logout.')
