@@ -25,6 +25,12 @@ pip install requests
 pip install nose
 ```
 
+[demjson][pip-demjson]
+
+```bash
+pip install demjson
+```
+
 ## How to run unit test
 
 You need setup test configurations before you can run any tests. Just rename `test/unit/test_config_example.py` to `test/unit/test_config.py` and replace all values for each `key` in `mockdata` dictionary according to your real CQ server.
@@ -44,3 +50,4 @@ nosetests test.unit.test_CQ:CQTestCase.test_get_db_sets -v
 <!-- links -->
 [pip-requests]: http://docs.python-requests.org/en/master/
 [pip-nose]: http://nose.readthedocs.io/en/latest/
+[pip-demjson]: https://github.com/dmeranda/demjson

@@ -4,4 +4,6 @@ mockdata = {
     'loginId': 'username',
     'password': 'password',
     'repository': 'repository',
+    'record_id': 'exist-record-id',
+    'record_id2': 'non-exist-record-id',
 }

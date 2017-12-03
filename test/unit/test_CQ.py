@@ -70,7 +70,8 @@ class CQTestCase(unittest.TestCase):
         self.assertTrue(res, 'Login failed.')
         self.assertNotEqual(origin_cquid, cq.cquid,
                             'New cq uid should be returned after login.')
-        self.assertTrue(is_auth, 'New cq uid should be authenticated after login.')
+        self.assertTrue(
+            is_auth, 'New cq uid should be authenticated after login.')
 
         # Clear resources.
         cq.open_session()
@@ -91,4 +92,19 @@ class CQTestCase(unittest.TestCase):
         self.assertTrue(res, 'Logout network failed.')
         self.assertNotEqual(origin_cquid, cq.cquid,
                             'New cq uid should be generated after logout.')
-        self.assertFalse(is_auth, 'New cq uid should not be authenticated after logout.')
+        self.assertFalse(
+            is_auth, 'New cq uid should not be authenticated after logout.')
+
+    def test_find_record(self):
+        cq = CQ(mockdata['base_url'])
+        cq.open_session()
+        try:
+            res = cq.login(mockdata['loginId'],
+                           mockdata['password'], mockdata['repository'])
+            resource_id = cq.find_record(mockdata['record_id'])
+            resource_id2 = cq.find_record(mockdata['record_id2'])
+            cq.logout()
+        finally:
+            cq.close_session()
+        self.assertIsNotNone(resource_id)
+        self.assertIsNone(resource_id2)

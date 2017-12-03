@@ -3,12 +3,12 @@
 # Author: weichen2046@gmail.com
 # Create Date: 2017.12.02
 
-import json
 import logging
 import re
 import urllib
 import uuid
 import requests
+import demjson
 
 
 class CQ(object):
@@ -21,11 +21,18 @@ class CQ(object):
     class SessionError(CQError):
         '''Raised when access network resources without an available session.'''
 
+    class NeedLoginError(CQError):
+        '''Raised when access network resources without login.'''
+        def __init__(self):
+            super(CQ.NeedLoginError, self).__init__('Should login first.')
+
     path_map = {
         'LOGIN': 'cqlogin.cq',
+        'FIND': 'cqfind.cq',
     }
 
     def __init__(self, url):
+        self.login_status = False
         self.url = url
         self.session = None
         self.cquid = str(uuid.uuid4())
@@ -130,22 +137,15 @@ class CQ(object):
             'cquid': self.cquid
         }
         resp = self.session.post(url, params=params, data=data)
-        if resp.status_code != requests.codes.ok:
-            return False
-        # Handle non-strict json response
-        tmp_text = resp.text.strip()
-        tmp_text = re.sub(r"{\s*'?(\w)", r'{"\1', tmp_text)
-        tmp_text = re.sub(r",\s*'?(\w)", r',"\1', tmp_text)
-        tmp_text = re.sub(r"(\w)'?\s*:(?!/)", r'\1":', tmp_text)
-        tmp_text = re.sub(r":\s*'([^']*)'\s*([,}])", r':"\1"\2', tmp_text)
-        tmp_text = re.sub(r",\s*]", "]", tmp_text)
-        jobj = json.loads(tmp_text)
-        if jobj['status'] != 'true':
+        jobj = self._check_response(resp)
+        if not jobj or jobj['status'] != 'true':
             return False
         self.cquid = jobj['cqUid']
         self.userdb = jobj['userdb']
         self.full_name = jobj['fullName']
         # TODO: update other inner data if needed.
+
+        self.login_status = True
         return True
 
     def logout(self):
@@ -170,7 +170,34 @@ class CQ(object):
             return True
         return False
 
+    def find_record(self, record_id):
+        '''
+        Get the record resource id.
+
+        Return resource id for the given record id or None.
+
+        - Need access network resources.
+        - Need login.
+        '''
+        self._check_session()
+        self._check_login()
+        path = self.path_map['FIND']
+        url = urllib.parse.urljoin(self.url, path)
+        params = {
+            'action': 'DoFindRecord',
+            'recordId': record_id,
+            'searchType': 'BY_RECORD_ID',
+            'cquid': self.cquid,
+        }
+        resp = self.session.get(url, params=params)
+        jobj = self._check_response(resp)
+        if jobj:
+            if jobj['status'] == 'true':
+                return jobj['id']
+        return None
+
     def _reset_fields(self):
+        self.login_status = False
         self.cquid = str(uuid.uuid4())
         self.userdb = None
         self.full_name = None
@@ -184,6 +211,13 @@ class CQ(object):
             raise CQ.SessionError(
                 'Should open session once before access any network resources.')
 
+    def _check_login(self):
+        '''
+        Will raise `NeedLoginError` when access network resource before login.
+        '''
+        if not self.login_status:
+            raise CQ.NeedLoginError()
+
     def _check_response(self, resp):
         '''
         Assume the response text is starts with `for(;;);` and followed well
@@ -196,7 +230,9 @@ class CQ(object):
             res_patt = re.compile(r'for\(;;\);(.*)')
             mat = re.match(res_patt, resp.text)
             if mat:
-                jobj = json.loads(mat[1])
+                jobj = demjson.decode(mat[1])
+            else:
+                jobj = demjson.decode(resp.text)
         return jobj
 
     def _check_response_status(self, resp):
