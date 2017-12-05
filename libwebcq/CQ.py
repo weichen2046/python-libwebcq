@@ -10,6 +10,8 @@ import uuid
 import requests
 import demjson
 
+from .record import Record
+
 
 class CQ(object):
     '''
@@ -23,12 +25,14 @@ class CQ(object):
 
     class NeedLoginError(CQError):
         '''Raised when access network resources without login.'''
+
         def __init__(self):
             super(CQ.NeedLoginError, self).__init__('Should login first.')
 
     path_map = {
         'LOGIN': 'cqlogin.cq',
         'FIND': 'cqfind.cq',
+        'DETAILS': 'cqartifactdetails.cq',
     }
 
     def __init__(self, url):
@@ -74,7 +78,7 @@ class CQ(object):
         - Need access network resources.
         - No need login.
         '''
-        self._check_session()
+        self._ensure_session()
 
         status = 'false'
         is_auth = False
@@ -99,7 +103,7 @@ class CQ(object):
         - Need access network resources.
         - No need login.
         '''
-        self._check_session()
+        self._ensure_session()
 
         dbs = []
 
@@ -123,7 +127,7 @@ class CQ(object):
         - Need access network resources.
         - No need login.
         '''
-        self._check_session()
+        self._ensure_session()
         path = self.path_map['LOGIN']
         url = urllib.parse.urljoin(self.url, path)
         params = {
@@ -155,7 +159,7 @@ class CQ(object):
         - Need access network resources.
         - Need login.
         '''
-        self._check_session()
+        self._ensure_session()
         path = self.path_map['LOGIN']
         url = urllib.parse.urljoin(self.url, path)
         params = {
@@ -179,8 +183,8 @@ class CQ(object):
         - Need access network resources.
         - Need login.
         '''
-        self._check_session()
-        self._check_login()
+        self._ensure_session()
+        self._ensure_login()
         path = self.path_map['FIND']
         url = urllib.parse.urljoin(self.url, path)
         params = {
@@ -196,6 +200,35 @@ class CQ(object):
                 return jobj['id']
         return None
 
+    def get_cq_record_details(self, record_id):
+        '''
+        Get the record details.
+
+        Return a `record.Record` instance or None.
+
+        - Need access network resources.
+        - Need login.
+        '''
+        self._ensure_session()
+        self._ensure_login()
+        resource_id = self.find_record(record_id)
+        if not resource_id:
+            return None
+        path = self.path_map['DETAILS']
+        url = urllib.parse.urljoin(self.url, path)
+        params = {
+            'action': 'GetCQRecordDetails',
+            'resourceId': resource_id,
+            'state': 'VIEW',
+            'acceptAllTabsData': 'true',
+            'cquid': self.cquid,
+        }
+        resp = self.session.get(url, params=params)
+        jobj = self._check_response(resp)
+        if not jobj or jobj['STATUS'] != 'true':
+            return None
+        return Record.create_from_details_json(jobj)
+
     def _reset_fields(self):
         self.login_status = False
         self.cquid = str(uuid.uuid4())
@@ -203,7 +236,7 @@ class CQ(object):
         self.full_name = None
         # TODO: reset other inner fields if needed.
 
-    def _check_session(self):
+    def _ensure_session(self):
         '''
         Will raise `SessionError` when there is no available session attached.
         '''
@@ -211,7 +244,7 @@ class CQ(object):
             raise CQ.SessionError(
                 'Should open session once before access any network resources.')
 
-    def _check_login(self):
+    def _ensure_login(self):
         '''
         Will raise `NeedLoginError` when access network resource before login.
         '''

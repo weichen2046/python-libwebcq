@@ -108,3 +108,24 @@ class CQTestCase(unittest.TestCase):
             cq.close_session()
         self.assertIsNotNone(resource_id)
         self.assertIsNone(resource_id2)
+
+    def test_get_record_details(self):
+        cq = CQ(mockdata['base_url'])
+        cq.open_session()
+        try:
+            res = cq.login(mockdata['loginId'],
+                           mockdata['password'], mockdata['repository'])
+            record = cq.get_cq_record_details(mockdata['record_id'])
+            cq.logout()
+        finally:
+            cq.close_session()
+
+        expect = mockdata['record1']
+        self.assertIsNotNone(
+            record, 'Record details for %s should not be None.' % mockdata['record_id'])
+        self.assertEqual(expect['display_name'], record.display_name,
+                         'The fetched record display name should equals the record id.')
+        self.assertEqual(expect['module_name'],
+                         record.module_name, 'Module name not equal.')
+        self.assertEqual(expect['state'], record.state,
+                         'State name not equal.')
