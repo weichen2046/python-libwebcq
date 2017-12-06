@@ -127,5 +127,10 @@ class CQTestCase(unittest.TestCase):
                          'The fetched record display name should equals the record id.')
         self.assertEqual(expect['module_name'],
                          record.module_name, 'Module name not equal.')
-        self.assertEqual(expect['state'], record.state,
-                         'State name not equal.')
+        self.assertEqual(expect['state'], record.state, 'State not equal.')
+        self.assertEqual(expect['last_op_date'],
+                         record.last_op_date, 'LastOpDate not equal.')
+        self.assertEqual(expect['owner_tel'],
+                         record.owner_tel, 'Owner tel not equal.')
+        self.assertEqual(expect['owner_email'],
+                         record.owner_email, 'Owner email not equal.')

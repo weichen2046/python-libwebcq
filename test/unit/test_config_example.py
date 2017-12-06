@@ -9,6 +9,9 @@ mockdata = {
         'display_name': 'display-name',
         'module_name': 'module-name',
         'state': 'state',
+        'last_op_date': '2017-12-04T01:56:01Z',
+        'owner_tel': 'owner telephone string',
+        'owner_email': 'owner email address',
     },
     'record_id2': 'non-exist-record-id',
 }
