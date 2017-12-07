@@ -12,6 +12,7 @@ mockdata = {
         'last_op_date': '2017-12-04T01:56:01Z',
         'owner_tel': 'owner telephone string',
         'owner_email': 'owner email address',
+        'open_duration': 'integer',
     },
     'record_id2': 'non-exist-record-id',
 }

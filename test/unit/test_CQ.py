@@ -134,3 +134,5 @@ class CQTestCase(unittest.TestCase):
                          record.owner_tel, 'Owner tel not equal.')
         self.assertEqual(expect['owner_email'],
                          record.owner_email, 'Owner email not equal.')
+        self.assertEqual(expect['open_duration'],
+                         record.open_duration, 'OpenDuration not equal.')

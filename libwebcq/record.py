@@ -15,7 +15,8 @@ class Record(object):
         'ModuleName': 'module_name',
         'State': 'state',
         'LastOpDate': 'last_op_date',
-        'OwnerInfo': 'parse_owner_info_field'
+        'OwnerInfo': 'parse_owner_info_field',
+        'OpenDuration': 'open_duration',
     }
 
     def __init__(self, record_id):
@@ -25,6 +26,7 @@ class Record(object):
         self.last_op_date = None
         self.owner_tel = None
         self.owner_email = None
+        self.open_duration = None
 
     def parse_owner_info_field(self, field):
         '''
@@ -44,6 +46,9 @@ class Record(object):
         it's value will be `field['CurrentValue']`.
         '''
         value = field['CurrentValue']
+        data_type = field['DataType']
+        if data_type == 'INTEGER':
+            value = int(value)
         setattr(instance, field_name, value)
 
     @staticmethod
@@ -60,6 +65,8 @@ class Record(object):
             if not field_name in record.field_parser_map:
                 continue
             parser = record.field_parser_map[field_name]
+            if not hasattr(record, parser):
+                continue
             if callable(getattr(record, parser)):
                 getattr(record, parser)(field)
             else:
