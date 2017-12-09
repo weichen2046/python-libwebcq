@@ -31,6 +31,24 @@ pip install nose
 pip install demjson
 ```
 
+## How to use
+
+```python
+cq = CQ('your://webcq/host')
+# Open a session befoer any network query.
+cq.open_session()
+try:
+    # Need login before query protected resources.
+    res = cq.login('username', 'password', 'repository')
+    record1 = cq.get_cq_record_details('record_id_1')
+    record2 = cq.get_cq_record_details('record_id_2')
+    # Don't forget logout.
+    cq.logout()
+finally:
+    # Close session when all work done.
+    cq.close_session()
+```
+
 ## How to run unit test
 
 You need setup test configurations before you can run any tests. Just rename `test/unit/test_config_example.py` to `test/unit/test_config.py` and replace all values for each `key` in `mockdata` dictionary according to your real CQ server.
