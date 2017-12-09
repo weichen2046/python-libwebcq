@@ -13,6 +13,11 @@ mockdata = {
         'owner_tel': 'owner telephone string',
         'owner_email': 'owner email address',
         'open_duration': 'integer',
+        'customer': {
+            'display_name': 'string',
+            'record_id': 'string',
+            'stable_location': 'string',
+        },
     },
     'record_id2': 'non-exist-record-id',
 }

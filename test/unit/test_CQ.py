@@ -9,6 +9,7 @@ Test cases for class libwebcq.CQ.
 import unittest
 
 from libwebcq.CQ import CQ
+from libwebcq.record import RecordType
 from .test_config import mockdata
 
 
@@ -115,7 +116,8 @@ class CQTestCase(unittest.TestCase):
         try:
             res = cq.login(mockdata['loginId'],
                            mockdata['password'], mockdata['repository'])
-            record = cq.get_cq_record_details(mockdata['record_id'])
+            resource_id = cq.find_record(mockdata['record_id'])
+            record = cq.get_cq_record_details(resource_id, RecordType.CRP)
             cq.logout()
         finally:
             cq.close_session()
@@ -126,13 +128,21 @@ class CQTestCase(unittest.TestCase):
         self.assertEqual(expect['display_name'], record.display_name,
                          'The fetched record display name should equals the record id.')
         self.assertEqual(expect['module_name'],
-                         record.module_name, 'Module name not equal.')
-        self.assertEqual(expect['state'], record.state, 'State not equal.')
+                         record.module_name, 'Module name is not equal.')
+        self.assertEqual(expect['state'], record.state, 'State is not equal.')
         self.assertEqual(expect['last_op_date'],
-                         record.last_op_date, 'LastOpDate not equal.')
+                         record.last_op_date, 'LastOpDate is not equal.')
         self.assertEqual(expect['owner_tel'],
-                         record.owner_tel, 'Owner tel not equal.')
+                         record.owner_tel, 'Owner tel is not equal.')
         self.assertEqual(expect['owner_email'],
-                         record.owner_email, 'Owner email not equal.')
+                         record.owner_email, 'Owner email is not equal.')
         self.assertEqual(expect['open_duration'],
-                         record.open_duration, 'OpenDuration not equal.')
+                         record.open_duration, 'OpenDuration is not equal.')
+        # Check custom
+        self.assertIsNotNone(record.customer, 'CRP customer is None.')
+        self.assertEqual(expect['customer']['display_name'],
+                         record.customer.display_name, 'Customer name is not equal.')
+        self.assertEqual(expect['customer']['record_id'],
+                         record.customer.record_id, 'Customer record id is not equal.')
+        self.assertEqual(expect['customer']['stable_location'],
+                         record.customer.stable_location, 'Customer stable location is not equal.')

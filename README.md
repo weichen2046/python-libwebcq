@@ -40,8 +40,10 @@ cq.open_session()
 try:
     # Need login before query protected resources.
     res = cq.login('username', 'password', 'repository')
-    record1 = cq.get_cq_record_details('record_id_1')
-    record2 = cq.get_cq_record_details('record_id_2')
+    res_id1 = cq.find_record('record_id_1')
+    record1 = cq.get_cq_record_details(res_id1, RecordType.CRP)
+    res_id2 = cq.find_record('record_id_2')
+    record2 = cq.get_cq_record_details(res_id2, RecordType.CRP)
     # Don't forget logout.
     cq.logout()
 finally:

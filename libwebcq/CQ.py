@@ -200,7 +200,7 @@ class CQ(object):
                 return jobj['id']
         return None
 
-    def get_cq_record_details(self, record_id):
+    def get_cq_record_details(self, resource_id, record_type):
         '''
         Get the record details.
 
@@ -211,8 +211,8 @@ class CQ(object):
         '''
         self._ensure_session()
         self._ensure_login()
-        resource_id = self.find_record(record_id)
         if not resource_id:
+            logging.warning('resource id of record is None, do nothing.')
             return None
         path = self.path_map['DETAILS']
         url = urllib.parse.urljoin(self.url, path)
@@ -227,7 +227,7 @@ class CQ(object):
         jobj = self._check_response(resp)
         if not jobj or jobj['STATUS'] != 'true':
             return None
-        return Record.create_from_details_json(jobj)
+        return Record.create_from_json_resp(self, jobj, record_type)
 
     def _reset_fields(self):
         self.login_status = False
