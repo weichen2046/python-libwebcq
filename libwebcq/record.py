@@ -8,6 +8,28 @@ from enum import Enum
 import re
 import sys
 
+from .error import DataTypeError
+
+
+class OwnerInfo(object):
+    '''
+    A container for CRP owner information.
+    '''
+
+    def __init__(self, tel, email):
+        self.tel = tel
+        self.email = email
+
+
+class DataType(Enum):
+    '''
+    Enum for data type.
+    '''
+    UNKNOWN = 'UNKNOWN'
+    RESOURCE = 'RESOURCE'
+    SHORT_STRING = 'SHORT_STRING'
+    MULTILINE_STRING = 'MULTILINE_STRING'
+
 
 class RecordType(Enum):
     '''
@@ -17,6 +39,7 @@ class RecordType(Enum):
     CRP = 1
     USER = 2
     CUSTOMER = 3
+    MODULE = 4
 
 
 class Record(ABC):
@@ -28,6 +51,7 @@ class Record(ABC):
         RecordType.CRP: 'CRPRecord',
         RecordType.CUSTOMER: 'CustomerRecord',
         RecordType.USER: 'UserRecord',
+        RecordType.MODULE: 'ModuleRecord',
     }
 
     cq_ref = None
@@ -71,6 +95,14 @@ class Record(ABC):
         record.parse_jobj(jobj)
         return record
 
+    @staticmethod
+    def _check_data_type(field, data_type, msg=''):
+        '''
+        '''
+        dt = field['DataType']
+        if dt != data_type.value:
+            raise DataTypeError(msg)
+
     def __init__(self, record_type):
         self.record_type = record_type
 
@@ -101,23 +133,24 @@ class CRPRecord(Record):
     '''
 
     field_parser_map = {
-        'ModuleName': 'module_name',
+        'ModuleName': 'parse_module_name_field',
         'State': 'state',
         'LastOpDate': 'last_op_date',
         'OwnerInfo': 'parse_owner_info_field',
         'OpenDuration': 'open_duration',
         'Customer': 'parse_customer_field',
+        'VersionBaseOn': 'version_base_on',
     }
 
     def __init__(self):
         super(CRPRecord, self).__init__(RecordType.CRP)
-        self.module_name = None
+        self.module = None
         self.state = None
         self.last_op_date = None
-        self.owner_tel = None
-        self.owner_email = None
+        self.owner_info = None
         self.open_duration = None
         self.customer = None
+        self.version_base_on = None
 
     def on_parse_jobj(self, jobj):
         for field in jobj['fields']:
@@ -138,8 +171,9 @@ class CRPRecord(Record):
         '''
         value = field['CurrentValue']
         values = value.split('\r\n')
-        self.owner_tel = re.match(r'Tel\s*:\s*(.*)', values[0]).groups()[0]
-        self.owner_email = re.match(r'Email\s*:\s*(.*)', values[1]).groups()[0]
+        tel = re.match(r'Tel\s*:\s*(.*)', values[0]).groups()[0]
+        email = re.match(r'Email\s*:\s*(.*)', values[1]).groups()[0]
+        self.owner_info = OwnerInfo(tel, email)
 
     def parse_customer_field(self, field):
         '''
@@ -147,12 +181,22 @@ class CRPRecord(Record):
 
         Return an instance of `CustomerRecord`.
         '''
-        data_type = field['DataType']
-        if data_type != 'RESOURCE':
-            return
+        self._check_data_type(
+            field, DataType.RESOURCE, 'Customer field data type should be RESOURCE.')
         record_id = field['RecordId']
         self.customer = self.cq_ref.get_cq_record_details(
             record_id, RecordType.CUSTOMER)
+
+    def parse_module_name_field(self, field):
+        '''
+        Parse module name information.
+
+        Return an instance of `ModuleRecord`.
+        '''
+        self._check_data_type(
+            field, DataType.RESOURCE, 'Module field data type should be RESOURCE.')
+        record_id = field['RecordId']
+        self.module = self.cq_ref.get_cq_record_details(record_id, RecordType.MODULE)
 
 
 class CustomerRecord(Record):
@@ -174,6 +218,18 @@ class UserRecord(Record):
 
     def __init__(self):
         super(UserRecord, self).__init__(RecordType.USER)
+
+    def on_parse_jobj(self, jobj):
+        pass
+
+
+class ModuleRecord(Record):
+    '''
+    Module type record.
+    '''
+
+    def __init__(self):
+        super(ModuleRecord, self).__init__(RecordType.MODULE)
 
     def on_parse_jobj(self, jobj):
         pass

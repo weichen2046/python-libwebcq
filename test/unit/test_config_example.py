@@ -7,17 +7,22 @@ mockdata = {
     'record_id': 'exist-record-id',
     'record1': {
         'display_name': 'display-name',
-        'module_name': 'module-name',
+        'module': {
+            'display_name': 'string',
+        },
         'state': 'state',
         'last_op_date': '2017-12-04T01:56:01Z',
-        'owner_tel': 'owner telephone string',
-        'owner_email': 'owner email address',
+        'owner_info': {
+            'tel': 'owner telephone string',
+            'email': 'owner email address',
+        },
         'open_duration': 'integer',
         'customer': {
             'display_name': 'string',
             'record_id': 'string',
             'stable_location': 'string',
         },
+        'version_base_on': 'string',
     },
     'record_id2': 'non-exist-record-id',
 }

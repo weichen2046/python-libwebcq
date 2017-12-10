@@ -9,7 +9,7 @@ Test cases for class libwebcq.CQ.
 import unittest
 
 from libwebcq.CQ import CQ
-from libwebcq.record import RecordType
+from libwebcq.record import CustomerRecord, ModuleRecord, OwnerInfo, RecordType
 from .test_config import mockdata
 
 
@@ -127,22 +127,37 @@ class CQTestCase(unittest.TestCase):
             record, 'Record details for %s should not be None.' % mockdata['record_id'])
         self.assertEqual(expect['display_name'], record.display_name,
                          'The fetched record display name should equals the record id.')
-        self.assertEqual(expect['module_name'],
-                         record.module_name, 'Module name is not equal.')
+
+        # Check module information.
+        self.assertIsInstance(record.module, ModuleRecord,
+                              'module field should be an instance of ModuleRecord.')
+        self.assertEqual(expect['module']['display_name'],
+                         record.module.display_name, 'Module name is not equal.')
+
         self.assertEqual(expect['state'], record.state, 'State is not equal.')
         self.assertEqual(expect['last_op_date'],
                          record.last_op_date, 'LastOpDate is not equal.')
-        self.assertEqual(expect['owner_tel'],
-                         record.owner_tel, 'Owner tel is not equal.')
-        self.assertEqual(expect['owner_email'],
-                         record.owner_email, 'Owner email is not equal.')
+
+        # Check owner information.
+        self.assertIsInstance(record.owner_info, OwnerInfo,
+                              'owner_info field should be an instance of OwnerInfo.')
+        self.assertEqual(expect['owner_info']['tel'],
+                         record.owner_info.tel, 'Owner tel is not equal.')
+        self.assertEqual(expect['owner_info']['email'],
+                         record.owner_info.email, 'Owner email is not equal.')
+
         self.assertEqual(expect['open_duration'],
                          record.open_duration, 'OpenDuration is not equal.')
-        # Check custom
-        self.assertIsNotNone(record.customer, 'CRP customer is None.')
+
+        # Check custom.
+        self.assertIsInstance(record.customer, CustomerRecord,
+                              'customer field should be an instance of CustomerRecord.')
         self.assertEqual(expect['customer']['display_name'],
                          record.customer.display_name, 'Customer name is not equal.')
         self.assertEqual(expect['customer']['record_id'],
                          record.customer.record_id, 'Customer record id is not equal.')
         self.assertEqual(expect['customer']['stable_location'],
                          record.customer.stable_location, 'Customer stable location is not equal.')
+
+        self.assertEqual(
+            expect['version_base_on'], record.version_base_on, 'VersionBaseOn is not equal.')
