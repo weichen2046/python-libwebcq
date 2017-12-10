@@ -9,6 +9,7 @@ Test cases for class libwebcq.CQ.
 import unittest
 
 from libwebcq.CQ import CQ
+from libwebcq.error import SessionError
 from libwebcq.record import CustomerRecord, ModuleRecord, OwnerInfo, RecordType
 from .test_config import mockdata
 
@@ -26,7 +27,7 @@ class CQTestCase(unittest.TestCase):
 
     def test_access_net_resoure_without_session(self):
         cq = CQ(mockdata['base_url'])
-        with self.assertRaises(CQ.SessionError) as err:
+        with self.assertRaises(SessionError) as err:
             cq.check_authenticated('cquid')
 
     def test_check_authenticated(self):
@@ -161,3 +162,12 @@ class CQTestCase(unittest.TestCase):
 
         self.assertEqual(
             expect['version_base_on'], record.version_base_on, 'VersionBaseOn is not equal.')
+
+        self.assertEqual(
+            expect['id'], record.id, 'id is not equal.')
+        self.assertEqual(
+            expect['headline'], record.headline, 'Headline is not equal.')
+        self.assertEqual(
+            expect['customer_phone'], record.customer_phone, 'CustomerPhone is not equal.')
+        self.assertListEqual(
+            expect['custom_emails'], record.custom_emails, 'CustomEmails is not equal.')

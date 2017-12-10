@@ -138,8 +138,14 @@ class CRPRecord(Record):
         'LastOpDate': 'last_op_date',
         'OwnerInfo': 'parse_owner_info_field',
         'OpenDuration': 'open_duration',
+        # Customer corporation information.
         'Customer': 'parse_customer_field',
         'VersionBaseOn': 'version_base_on',
+        'Headline': 'headline',
+        'id': 'id',
+        # Customer owner contact phone number.
+        'CustomerPhone': 'customer_phone',
+        'CustomEmails': 'parse_custom_emails',
     }
 
     def __init__(self):
@@ -151,6 +157,10 @@ class CRPRecord(Record):
         self.open_duration = None
         self.customer = None
         self.version_base_on = None
+        self.id = None
+        self.customer_phone = None
+        self.custom_emails = []
+        self.headline = None
 
     def on_parse_jobj(self, jobj):
         for field in jobj['fields']:
@@ -182,10 +192,24 @@ class CRPRecord(Record):
         Return an instance of `CustomerRecord`.
         '''
         self._check_data_type(
-            field, DataType.RESOURCE, 'Customer field data type should be RESOURCE.')
+            field, DataType.RESOURCE,
+            'Customer field data type should be RESOURCE.')
         record_id = field['RecordId']
         self.customer = self.cq_ref.get_cq_record_details(
             record_id, RecordType.CUSTOMER)
+
+    def parse_custom_emails(self, field):
+        '''
+        Parse custom available emails.
+
+        Return a list of email addresses.
+        '''
+        self._check_data_type(
+            field, DataType.MULTILINE_STRING,
+            'Customer emails field data type should be RESOURCE.')
+
+        for email in field['CurrentValue']:
+            self.custom_emails.append(email)
 
     def parse_module_name_field(self, field):
         '''
@@ -196,7 +220,8 @@ class CRPRecord(Record):
         self._check_data_type(
             field, DataType.RESOURCE, 'Module field data type should be RESOURCE.')
         record_id = field['RecordId']
-        self.module = self.cq_ref.get_cq_record_details(record_id, RecordType.MODULE)
+        self.module = self.cq_ref.get_cq_record_details(
+            record_id, RecordType.MODULE)
 
 
 class CustomerRecord(Record):

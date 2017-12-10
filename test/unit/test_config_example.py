@@ -6,6 +6,8 @@ mockdata = {
     'repository': 'repository',
     'record_id': 'exist-record-id',
     'record1': {
+        'id': 'string',
+        'headline': 'string',
         'display_name': 'display-name',
         'module': {
             'display_name': 'string',
@@ -22,6 +24,8 @@ mockdata = {
             'record_id': 'string',
             'stable_location': 'string',
         },
+        'customer_phone': 'string',
+        'custom_emails': [],
         'version_base_on': 'string',
     },
     'record_id2': 'non-exist-record-id',
